@@ -77,6 +77,6 @@ public class AuditController {
 
     @GetMapping("/review/{id}")
     public Result review(@PathVariable Integer id, @RequestParam AuditStatusEnum auditStatus){
-        return Result.suc(auditService.review(id, auditStatus));
+        return auditService.review(id, auditStatus) ? Result.suc() : Result.fail("审核记录不存在");
     }
 }

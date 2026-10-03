@@ -70,41 +70,55 @@ public class AuditServiceImpl extends ServiceImpl<AuditMapper, Audit> implements
     @Override
     @Transactional(rollbackFor = RuntimeException.class)
     public boolean review(Integer id, AuditStatusEnum auditStatus) {
-        if (auditStatus.equals(AuditStatusEnum.PASS)){
+        if (AuditStatusEnum.PASS.equals(auditStatus)){
 
             // 先更新当前申请的状态
             Audit audit = auditMapper.selectById(id);
+            if (audit == null) {
+                return false;
+            }
             audit.setStatus(AuditStatusEnum.PASS)
                     .setAuditDate(LocalDateTime.now());
             auditMapper.updateById(audit);
 
             // 再更新损坏记录状态
             Broken broken = brokenService.getById(audit.getApplyId());
-            broken.setStatus(EquipmentStatusEnum.ABANDONED);
-            brokenService.saveOrUpdate(broken);
+            if (broken != null) {
+                broken.setStatus(EquipmentStatusEnum.ABANDONED);
+                brokenService.saveOrUpdate(broken);
 
-            // 再更新设备基础状态
-            EquipmentBase equipmentBase = equipmentBaseService.findById(broken.getEqId());
-            equipmentBase.setStatus(EquipmentStatusEnum.ABANDONED);
-            equipmentBaseService.saveOrUpdate(equipmentBase);
+                // 再更新设备基础状态
+                EquipmentBase equipmentBase = equipmentBaseService.findById(broken.getEqId());
+                if (equipmentBase != null) {
+                    equipmentBase.setStatus(EquipmentStatusEnum.ABANDONED);
+                    equipmentBaseService.saveOrUpdate(equipmentBase);
+                }
+            }
 
-        }else if (auditStatus.equals(AuditStatusEnum.REJECT)) {
+        }else if (AuditStatusEnum.REJECT.equals(auditStatus)) {
 
             // 先更新当前申请的状态
             Audit audit = auditMapper.selectById(id);
+            if (audit == null) {
+                return false;
+            }
             audit.setStatus(AuditStatusEnum.REJECT)
                     .setAuditDate(LocalDateTime.now());
             auditMapper.updateById(audit);
 
             // 再更新损坏记录状态
             Broken broken = brokenService.getById(audit.getApplyId());
-            broken.setStatus(EquipmentStatusEnum.FAULT);
-            brokenService.saveOrUpdate(broken);
+            if (broken != null) {
+                broken.setStatus(EquipmentStatusEnum.FAULT);
+                brokenService.saveOrUpdate(broken);
 
-            // 再更新设备基础状态
-            EquipmentBase equipmentBase = equipmentBaseService.findById(broken.getEqId());
-            equipmentBase.setStatus(EquipmentStatusEnum.FAULT);
-            equipmentBaseService.saveOrUpdate(equipmentBase);
+                // 再更新设备基础状态
+                EquipmentBase equipmentBase = equipmentBaseService.findById(broken.getEqId());
+                if (equipmentBase != null) {
+                    equipmentBase.setStatus(EquipmentStatusEnum.FAULT);
+                    equipmentBaseService.saveOrUpdate(equipmentBase);
+                }
+            }
 
         }else {
             throw new RuntimeException("申请状态有误，请核实申请状态");
